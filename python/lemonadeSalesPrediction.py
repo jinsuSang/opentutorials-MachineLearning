@@ -13,7 +13,7 @@ Y = tf.keras.layers.Dense(1)(X)
 model = tf.keras.models.Model(X, Y)
 model.compile(loss='mse')
 
-model.fit(independent, dependent, epochs=13000, verbose=0)
+model.fit(independent, dependent, epochs=15000, verbose=0)
 model.fit(independent, dependent, epochs=10)
 
 print(model.predict(independent))
