@@ -18,10 +18,24 @@ const run = async () => {
 
   const bostonPriceDataset = bostonPriceCSV.map(({ xs, ys }) => {
     return { xs: Object.values(xs), ys: Object.values(ys) }
-  }).batch(10)
+  }).batch(10).shuffle(10)
 
   const input = tf.input({ shape: [13] })
-  const output = tf.layers.dense({ units: 1 }).apply(input)
+
+  let hidden = tf.layers.dense({ units: 8 }).apply(input)
+  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
+
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
+
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
+
+  const output = tf.layers.dense({ units: 1 }).apply(hidden)
+
   const model = tf.model({
     inputs: input,
     outputs: output
@@ -42,7 +56,7 @@ const run = async () => {
   })
 
   try {
-    const testDataset = await createTestDataSet(bostonPriceDataset, 10, 5, 10)
+    const testDataset = await createTestDataSet(bostonPriceDataset, 0, 0, 5)
     model.predict(testDataset.xs).print()
     testDataset.ys.print()
     model.getWeights()[0].print()
