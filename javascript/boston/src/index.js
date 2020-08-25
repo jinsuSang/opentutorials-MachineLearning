@@ -18,7 +18,7 @@ const run = async () => {
 
   const bostonPriceDataset = bostonPriceCSV.map(({ xs, ys }) => {
     return { xs: Object.values(xs), ys: Object.values(ys) }
-  }).batch(10).shuffle(10)
+  }).batch(50).shuffle(10)
 
   const input = tf.input({ shape: [13] })
 
@@ -26,11 +26,11 @@ const run = async () => {
   hidden = tf.layers.batchNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
-  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.dense({ units: 4 }).apply(hidden)
   hidden = tf.layers.batchNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
-  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.dense({ units: 2 }).apply(hidden)
   hidden = tf.layers.batchNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
@@ -40,12 +40,14 @@ const run = async () => {
     inputs: input,
     outputs: output
   })
-  model.compile({ optimizer: tf.train.adam(), loss: tf.losses.meanSquaredError })
+  model.compile({ optimizer: tf.train.adam(0.01), loss: tf.losses.meanSquaredError })
   model.summary()
 
   await model.fitDataset(bostonPriceDataset, {
-    epochs: 1000
+    epochs: 3000
   })
+
+
   await model.fitDataset(bostonPriceDataset, {
     epochs: 10,
     callbacks: {
