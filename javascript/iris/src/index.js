@@ -29,31 +29,31 @@ const run = async () => {
         break;
     }
     return { xs: Object.values(xs), ys: label }
-  }).batch(10).shuffle(10)
+  }).batch(16).shuffle(10)
 
   const input = tf.input({ shape: [4] })
 
   let hidden = tf.layers.dense({ units: 8 }).apply(input)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
   hidden = tf.layers.dense({ units: 8 }).apply(hidden)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
-  hidden = tf.layers.dense({ units: 4 }).apply(hidden)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
   const output = tf.layers.activation({ activation: 'softmax' }).apply(tf.layers.dense({ units: 3 }).apply(hidden))
 
   const model = tf.model({ inputs: input, outputs: output })
-  model.compile({ optimizer: tf.train.adam(0.02), loss: 'categoricalCrossentropy', metrics: 'accuracy' })
+  model.compile({ optimizer: tf.train.adam(0.001), loss: 'categoricalCrossentropy', metrics: 'accuracy' })
   model.summary()
 
 
   await model.fitDataset(irisDataset, {
-    epochs: 1500
+    epochs: 1000
   })
 
   await model.fitDataset(irisDataset, {
