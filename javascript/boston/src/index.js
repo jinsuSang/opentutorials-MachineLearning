@@ -16,22 +16,28 @@ const run = async () => {
     { columnConfigs: { medv: { isLabel: true } } }
   )
 
+  // tf.data.Dataset 으로 변환
   const bostonPriceDataset = bostonPriceCSV.map(({ xs, ys }) => {
     return { xs: Object.values(xs), ys: Object.values(ys) }
-  }).batch(50).shuffle(10)
+  }).batch(32).shuffle(10)
 
+  // 모델 생성
   const input = tf.input({ shape: [13] })
 
   let hidden = tf.layers.dense({ units: 8 }).apply(input)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
-  hidden = tf.layers.dense({ units: 4 }).apply(hidden)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
-  hidden = tf.layers.dense({ units: 2 }).apply(hidden)
-  hidden = tf.layers.batchNormalization().apply(hidden)
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
+  hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
+
+  hidden = tf.layers.dense({ units: 8 }).apply(hidden)
+  hidden = tf.layers.layerNormalization().apply(hidden)
   hidden = tf.layers.activation({ activation: 'selu' }).apply(hidden)
 
   const output = tf.layers.dense({ units: 1 }).apply(hidden)
@@ -40,13 +46,13 @@ const run = async () => {
     inputs: input,
     outputs: output
   })
-  model.compile({ optimizer: tf.train.adam(0.01), loss: tf.losses.meanSquaredError })
+  model.compile({ optimizer: tf.train.adam(0.001), loss: tf.losses.meanSquaredError })
   model.summary()
 
+  // 모델 학습
   await model.fitDataset(bostonPriceDataset, {
-    epochs: 3000
+    epochs: 1000
   })
-
 
   await model.fitDataset(bostonPriceDataset, {
     epochs: 10,
@@ -57,14 +63,13 @@ const run = async () => {
     }
   })
 
-  try {
-    const testDataset = await createTestDataSet(bostonPriceDataset, 0, 0, 5)
-    model.predict(testDataset.xs).print()
-    testDataset.ys.print()
-    model.getWeights()[0].print()
-  } catch (error) {
-    console.error(error.message)
-  }
+  // 테스트 데이터 생성
+  const testDataset = await createTestDataSet(bostonPriceDataset, 0, 0, 5)
+
+  // 보스터 집값 예측
+  model.predict(testDataset.xs).print()
+  testDataset.ys.print()
+  model.getWeights()[0].print()
 
 }
 
