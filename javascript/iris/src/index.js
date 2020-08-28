@@ -11,8 +11,14 @@ const app = express()
 app.use(express.static(publicDirectoryPath))
 
 const run = async () => {
+  // csv 파일 읽기
   const irisCSVPath = 'file://' + path.join(__dirname, '../data/iris.csv')
-  const irisCSV = tf.data.csv(irisCSVPath, { hasHeader: true, columnConfigs: { '품종': { isLabel: true } } })
+  const irisCSV = tf.data.csv(irisCSVPath, {
+    hasHeader: true,
+    columnConfigs: { '품종': { isLabel: true } }
+  })
+
+  // 데이터셋 만들기
   const irisDataset = irisCSV.map(({ xs, ys }) => {
     let label = null
     switch (ys['품종']) {
@@ -31,6 +37,7 @@ const run = async () => {
     return { xs: Object.values(xs), ys: label }
   }).batch(16).shuffle(10)
 
+  // 모델 만들기
   const input = tf.input({ shape: [4] })
 
   let hidden = tf.layers.dense({ units: 8 }).apply(input)
@@ -51,7 +58,7 @@ const run = async () => {
   model.compile({ optimizer: tf.train.adam(0.001), loss: 'categoricalCrossentropy', metrics: 'accuracy' })
   model.summary()
 
-
+  // 모델 학습
   await model.fitDataset(irisDataset, {
     epochs: 1000
   })
@@ -65,6 +72,7 @@ const run = async () => {
     }
   })
 
+  // 테스트 데이터로 분류 결과값 확인
   const testDataset = await createTestDataSet(irisDataset, 0, 0, 8)
   model.predict(testDataset.xs).print()
   testDataset.ys.print()
